@@ -9,30 +9,42 @@ import (
 	"github.com/bmatcuk/doublestar"
 )
 
-type junitXML struct {
-	TestCases []struct {
-		File string  `xml:"file,attr"`
-		Time float64 `xml:"time,attr"`
-	} `xml:"testcase"`
+type TestSuites struct {
+	TestSuites []TestSuite `xml:"testsuite"`
 }
 
-func loadJUnitXML(reader io.Reader) *junitXML {
-	var junitXML junitXML
+type TestSuite struct {
+	TestCases []TestCase `xml:"testcase"`
+}
 
-	decoder := xml.NewDecoder(reader)
-	err := decoder.Decode(&junitXML)
+type TestCase struct {
+	File string  `xml:"file,attr"`
+	Time float64 `xml:"time,attr"`
+}
+
+func loadJUnitXML(xmlData []byte) *TestSuites {
+	var testSuites TestSuites
+	err := xml.Unmarshal(xmlData, &testSuites)
 	if err != nil {
-		fatalMsg("failed to parse junit xml: %v\n", err)
+		fatalMsg("failed to unmarshal junit xml: %v\n", err)
 	}
-
-	return &junitXML
+	return &testSuites
 }
 
 func addFileTimesFromIOReader(fileTimes map[string]float64, reader io.Reader) {
-	junitXML := loadJUnitXML(reader)
-	for _, testCase := range junitXML.TestCases {
-		filePath := path.Clean(testCase.File)
-		fileTimes[filePath] += testCase.Time
+	xmlData, err := io.ReadAll(reader)
+
+	if err != nil {
+		fatalMsg("failed to read junit xml: %v\n", err)
+	}
+
+	testSuites := loadJUnitXML(xmlData)
+
+	for _, testSuite := range testSuites.TestSuites {
+		for _, testCase := range testSuite.TestCases {
+			filePath := path.Clean(testCase.File)
+			fileTimes[filePath] += testCase.Time
+		}
 	}
 }
 

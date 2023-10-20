@@ -6,27 +6,13 @@ This is necessary for running the tests in parallel. As the execution time of te
 
 ## Compatibility
 
-This tool was written for Ruby and CircleCI, but it can be used with any file-based test suite on any CI.
-Since then, CircleCI has introduced built-in test splitting. Also since then, the tool has been applied on
-GitHub Actions, that does not provide native test splitting.
-
-There is a [split-tests GitHub Action](https://github.com/marketplace/actions/split-tests) using this tool available on the Actions Marketplace.
+This tool was written for Ruby and GitHub Actions, but it can be used with any file-based test suite on any CI.
 
 It is written in Golang, released as a binary, and has no external dependencies.
 
 ## Usage
 
 Download and extract the latest build from the releases page.
-
-### Using the CircleCI API
-
-Get an API key and set `CIRCLECI_API_KEY` in the project config.
-
-```
-rspec $(split_tests -circle-project github.com/leonid-shevtsov/split_tests)
-```
-
-(The tool returns the set of files for the current split, joined by spaces.)
 
 ### Using a JUnit report
 
@@ -60,13 +46,6 @@ rspec $(split_tests)
 
 ```plain
 $./split_tests -help
-
-  -circleci-branch string
-        Current branch for CircleCI (or set CIRCLE_BRANCH) - required to use CircleCI
-  -circleci-key string
-        CircleCI API key (or set CIRCLECI_API_KEY environment variable) - required to use CircleCI
-  -circleci-project string
-        CircleCI project name (e.g. github/leonid-shevtsov/split_tests) - required to use CircleCI
   -glob 'pattern'
         Glob pattern to find test files (default 'spec/**/*_spec.rb'). Make sure to single-quote the pattern to avoid shell expansion.
   -exclude-glob 'pattern'
@@ -92,7 +71,3 @@ This tool is written in Go and uses Go modules.
 - Install Go
 - Checkout the code
 - `make`
-
----
-
-(c) [Leonid Shevtsov](https://leonid.shevtsov.me) 2017-2020

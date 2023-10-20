@@ -1,5 +1,5 @@
-module github.com/leonid-shevtsov/split_tests
+module github.com/willgeorgetaylor/split_tests
 
-go 1.14
+go 1.21.3
 
-require github.com/bmatcuk/doublestar v1.3.0
+require github.com/bmatcuk/doublestar v1.3.4

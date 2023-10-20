@@ -10,17 +10,13 @@ import (
 	"github.com/bmatcuk/doublestar"
 )
 
-var useCircleCI bool
 var useJUnitXML bool
 var useLineCount bool
 var junitXMLPath string
 var testFilePattern = ""
 var excludeFilePattern = ""
-var circleCIProjectPrefix = ""
-var circleCIBranchName string
 var splitIndex int
 var splitTotal int
-var circleCIAPIKey string
 
 func printMsg(msg string, args ...interface{}) {
 	if len(args) == 0 {
@@ -58,7 +54,7 @@ func addNewFiles(fileTimes map[string]float64, currentFileSet map[string]bool) {
 		if _, isSet := fileTimes[file]; isSet {
 			continue
 		}
-		if useCircleCI || useJUnitXML {
+		if useJUnitXML {
 			printMsg("missing file time for %s\n", file)
 		}
 		fileTimes[file] = averageFileTime
@@ -72,10 +68,6 @@ func parseFlags() {
 	flag.IntVar(&splitIndex, "split-index", -1, "This test container's index (or set CIRCLE_NODE_INDEX)")
 	flag.IntVar(&splitTotal, "split-total", -1, "Total number of containers (or set CIRCLE_NODE_TOTAL)")
 
-	flag.StringVar(&circleCIAPIKey, "circleci-key", "", "CircleCI API key (or set CIRCLECI_API_KEY environment variable) - required to use CircleCI")
-	flag.StringVar(&circleCIProjectPrefix, "circleci-project", "", "CircleCI project name (e.g. github/leonid-shevtsov/split_tests) - required to use CircleCI")
-	flag.StringVar(&circleCIBranchName, "circleci-branch", "", "Current branch for CircleCI (or set CIRCLE_BRANCH) - required to use CircleCI")
-
 	flag.BoolVar(&useJUnitXML, "junit", false, "Use a JUnit XML report for test times")
 	flag.StringVar(&junitXMLPath, "junit-path", "", "Path to a JUnit XML report (leave empty to read from stdin; use glob pattern to load multiple files)")
 
@@ -87,12 +79,7 @@ func parseFlags() {
 	flag.Parse()
 
 	var err error
-	if circleCIAPIKey == "" {
-		circleCIAPIKey = os.Getenv("CIRCLECI_API_KEY")
-	}
-	if circleCIBranchName == "" {
-		circleCIBranchName = os.Getenv("CIRCLE_BRANCH")
-	}
+
 	if splitTotal == -1 {
 		splitTotal, err = strconv.Atoi(os.Getenv("CIRCLE_NODE_TOTAL"))
 		if err != nil {
@@ -106,15 +93,10 @@ func parseFlags() {
 		}
 	}
 
-	useCircleCI = circleCIAPIKey != ""
-
 	if showHelp {
 		printMsg("Splits test files into containers of even duration\n\n")
 		flag.PrintDefaults()
 		os.Exit(1)
-	}
-	if useCircleCI && (circleCIProjectPrefix == "" || circleCIBranchName == "") {
-		fatalMsg("Incomplete CircleCI configuration (set -circleci-key, -circleci-project, and -circleci-branch\n")
 	}
 	if splitTotal == 0 || splitIndex < 0 || splitIndex > splitTotal {
 		fatalMsg("-split-index and -split-total (and environment variables) are missing or invalid\n")
@@ -148,19 +130,18 @@ func main() {
 	}
 
 	fileTimes := make(map[string]float64)
+
 	if useLineCount {
 		estimateFileTimesByLineCount(currentFileSet, fileTimes)
 	} else if useJUnitXML {
 		getFileTimesFromJUnitXML(fileTimes)
-	} else if useCircleCI {
-		getFileTimesFromCircleCI(fileTimes)
 	}
 
 	removeDeletedFiles(fileTimes, currentFileSet)
 	addNewFiles(fileTimes, currentFileSet)
 
 	buckets, bucketTimes := splitFiles(fileTimes, splitTotal)
-	if useCircleCI || useJUnitXML {
+	if useJUnitXML {
 		printMsg("expected test time: %0.1fs\n", bucketTimes[splitIndex])
 	}
 
