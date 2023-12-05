@@ -137,6 +137,11 @@ func main() {
 		getFileTimesFromJUnitXML(fileTimes)
 	}
 
+	// Print the file times map
+	for file, time := range fileTimes {
+		printMsg("%s: %0.1fs\n", file, time)
+	}
+
 	removeDeletedFiles(fileTimes, currentFileSet)
 	addNewFiles(fileTimes, currentFileSet)
 
