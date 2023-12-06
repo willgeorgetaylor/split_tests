@@ -146,6 +146,10 @@ func main() {
 		averageFileTimes[file] = averageFileTime
 	}
 
+	for file, time := range fileTimes {
+		printMsg("%s: %0.1fs\n", file, time)
+	}
+
 	addNewFiles(averageFileTimes, currentFileSet)
 
 	buckets, bucketTimes := splitFiles(averageFileTimes, splitTotal)
