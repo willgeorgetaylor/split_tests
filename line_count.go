@@ -6,7 +6,7 @@ import (
 	"os"
 )
 
-func estimateFileTimesByLineCount(currentFileSet map[string]bool, fileTimes map[string]float64) {
+func estimateFileTimesByLineCount(currentFileSet map[string]bool, fileTimes map[string][]float64) {
 	for fileName := range currentFileSet {
 		file, err := os.Open(fileName)
 		if err != nil {
@@ -19,7 +19,7 @@ func estimateFileTimesByLineCount(currentFileSet map[string]bool, fileTimes map[
 			printMsg("failed to count lines in file %s: %v\n", fileName, err)
 			continue
 		}
-		fileTimes[fileName] = float64(lineCount)
+		fileTimes[fileName] = []float64{float64(lineCount)}
 	}
 }
 

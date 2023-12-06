@@ -31,7 +31,7 @@ func fatalMsg(msg string, args ...interface{}) {
 	os.Exit(1)
 }
 
-func removeDeletedFiles(fileTimes map[string]float64, currentFileSet map[string]bool) {
+func removeDeletedFiles(fileTimes map[string][]float64, currentFileSet map[string]bool) {
 	for file := range fileTimes {
 		if !currentFileSet[file] {
 			delete(fileTimes, file)
@@ -124,7 +124,7 @@ func main() {
 		}
 	}
 
-	fileTimes := make(map[string]float64)
+	fileTimes := make(map[string][]float64)
 
 	if useLineCount {
 		estimateFileTimesByLineCount(currentFileSet, fileTimes)
@@ -132,15 +132,28 @@ func main() {
 		getFileTimesFromJUnitXML(fileTimes)
 	}
 
+	removeDeletedFiles(fileTimes, currentFileSet)
+
 	// Print the file times map
 	for file, time := range fileTimes {
-		printMsg("%s: %0.1fs\n", file, time)
+		fmt.Printf("%s: %v\n", file, time)
 	}
 
-	removeDeletedFiles(fileTimes, currentFileSet)
-	addNewFiles(fileTimes, currentFileSet)
+	// Create a new file time map with average times
+	averageFileTimes := make(map[string]float64)
 
-	buckets, bucketTimes := splitFiles(fileTimes, splitTotal)
+	for file, times := range fileTimes {
+		averageFileTime := 0.0
+		for _, time := range times {
+			averageFileTime += time
+		}
+		averageFileTime /= float64(len(times))
+		averageFileTimes[file] = averageFileTime
+	}
+
+	addNewFiles(averageFileTimes, currentFileSet)
+
+	buckets, bucketTimes := splitFiles(averageFileTimes, splitTotal)
 	if useJUnitXML {
 		printMsg("expected test time: %0.1fs\n", bucketTimes[splitIndex])
 	}

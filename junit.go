@@ -14,11 +14,7 @@ type TestSuites struct {
 }
 
 type TestSuite struct {
-	TestCases []TestCase `xml:"testcase"`
-}
-
-type TestCase struct {
-	File string  `xml:"file,attr"`
+	File string  `xml:"filepath,attr"`
 	Time float64 `xml:"time,attr"`
 }
 
@@ -31,7 +27,7 @@ func loadJUnitXML(xmlData []byte) *TestSuites {
 	return &testSuites
 }
 
-func addFileTimesFromIOReader(fileTimes map[string]float64, reader io.Reader) {
+func addFileTimesFromIOReader(fileTimes map[string][]float64, reader io.Reader) {
 	xmlData, err := io.ReadAll(reader)
 
 	if err != nil {
@@ -41,14 +37,14 @@ func addFileTimesFromIOReader(fileTimes map[string]float64, reader io.Reader) {
 	testSuites := loadJUnitXML(xmlData)
 
 	for _, testSuite := range testSuites.TestSuites {
-		for _, testCase := range testSuite.TestCases {
-			filePath := path.Clean(testCase.File)
-			fileTimes[filePath] += testCase.Time
-		}
+		filePath := path.Clean(testSuite.File)
+		printMsg("adding test time for %s\n", filePath)
+		printMsg("  time: %f\n", testSuite.Time)
+		fileTimes[filePath] = append(fileTimes[filePath], testSuite.Time)
 	}
 }
 
-func getFileTimesFromJUnitXML(fileTimes map[string]float64) {
+func getFileTimesFromJUnitXML(fileTimes map[string][]float64) {
 	if junitXMLPath != "" {
 		filenames, err := doublestar.Glob(junitXMLPath)
 		if err != nil {
