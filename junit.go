@@ -38,8 +38,6 @@ func addFileTimesFromIOReader(fileTimes map[string][]float64, reader io.Reader) 
 
 	for _, testSuite := range testSuites.TestSuites {
 		filePath := path.Clean(testSuite.File)
-		printMsg("adding test time for %s\n", filePath)
-		printMsg("  time: %f\n", testSuite.Time)
 		fileTimes[filePath] = append(fileTimes[filePath], testSuite.Time)
 	}
 }

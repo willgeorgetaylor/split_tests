@@ -134,11 +134,6 @@ func main() {
 
 	removeDeletedFiles(fileTimes, currentFileSet)
 
-	// Print the file times map
-	for file, time := range fileTimes {
-		fmt.Printf("%s: %v\n", file, time)
-	}
-
 	// Create a new file time map with average times
 	averageFileTimes := make(map[string]float64)
 
@@ -154,6 +149,7 @@ func main() {
 	addNewFiles(averageFileTimes, currentFileSet)
 
 	buckets, bucketTimes := splitFiles(averageFileTimes, splitTotal)
+
 	if useJUnitXML {
 		printMsg("expected test time: %0.1fs\n", bucketTimes[splitIndex])
 	}
