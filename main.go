@@ -4,7 +4,6 @@ import (
 	"flag"
 	"fmt"
 	"os"
-	"strconv"
 	"strings"
 
 	"github.com/bmatcuk/doublestar"
@@ -15,6 +14,7 @@ var useLineCount bool
 var junitXMLPath string
 var testFilePattern = ""
 var excludeFilePattern = ""
+var testFileSpaceSeparatedList = ""
 var splitIndex int
 var splitTotal int
 
@@ -64,6 +64,7 @@ func addNewFiles(fileTimes map[string]float64, currentFileSet map[string]bool) {
 func parseFlags() {
 	flag.StringVar(&testFilePattern, "glob", "spec/**/*_spec.rb", "Glob pattern to find test files. Make sure to single-quote to avoid shell expansion.")
 	flag.StringVar(&excludeFilePattern, "exclude-glob", "", "Glob pattern to exclude test files. Make sure to single-quote.")
+	flag.StringVar(&testFileSpaceSeparatedList, "tests", "", "Space-separated list of files. Will be appended to the files found (and excluded) by the globs. Make sure to single-quote to avoid shell expansion.")
 
 	flag.IntVar(&splitIndex, "split-index", -1, "This test container's index (or set CIRCLE_NODE_INDEX)")
 	flag.IntVar(&splitTotal, "split-total", -1, "Total number of containers (or set CIRCLE_NODE_TOTAL)")
@@ -78,21 +79,6 @@ func parseFlags() {
 
 	flag.Parse()
 
-	var err error
-
-	if splitTotal == -1 {
-		splitTotal, err = strconv.Atoi(os.Getenv("CIRCLE_NODE_TOTAL"))
-		if err != nil {
-			splitIndex = -1
-		}
-	}
-	if splitIndex == -1 {
-		splitIndex, err = strconv.Atoi(os.Getenv("CIRCLE_NODE_INDEX"))
-		if err != nil {
-			splitIndex = -1
-		}
-	}
-
 	if showHelp {
 		printMsg("Splits test files into containers of even duration\n\n")
 		flag.PrintDefaults()
@@ -106,16 +92,19 @@ func parseFlags() {
 func main() {
 	parseFlags()
 
-	// We are not using filepath.Glob,
-	// because it doesn't support '**' (to match all files in all nested directories)
-	currentFiles, err := doublestar.Glob(testFilePattern)
-	if err != nil {
-		printMsg("failed to enumerate current file set: %v", err)
-		os.Exit(1)
-	}
 	currentFileSet := make(map[string]bool)
-	for _, file := range currentFiles {
-		currentFileSet[file] = true
+
+	if testFilePattern != "" {
+		// We are not using filepath.Glob,
+		// because it doesn't support '**' (to match all files in all nested directories)
+		currentFiles, err := doublestar.Glob(testFilePattern)
+		if err != nil {
+			printMsg("failed to enumerate current file set: %v", err)
+			os.Exit(1)
+		}
+		for _, file := range currentFiles {
+			currentFileSet[file] = true
+		}
 	}
 
 	if excludeFilePattern != "" {
@@ -126,6 +115,12 @@ func main() {
 		}
 		for _, file := range excludedFiles {
 			delete(currentFileSet, file)
+		}
+	}
+
+	if testFileSpaceSeparatedList != "" {
+		for _, file := range strings.Fields(testFileSpaceSeparatedList) {
+			currentFileSet[file] = true
 		}
 	}
 
