@@ -74,7 +74,7 @@ func parseFlags() {
 	flag.StringVar(&junitXMLPath, "junit-path", "", "Path to a JUnit XML report (leave empty to read from stdin; use glob pattern to load multiple files)")
 
 	flag.BoolVar(&useLineCount, "line-count", false, "Use line count to estimate test times")
-	flag.BoolVar(&useLineCount, "sum", false, "Sum test times instead of averaging them")
+	flag.BoolVar(&sum, "sum", false, "Sum test times instead of averaging them")
 
 	var showHelp bool
 	flag.BoolVar(&showHelp, "help", false, "Show this help text")
