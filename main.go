@@ -11,6 +11,7 @@ import (
 
 var useJUnitXML bool
 var useLineCount bool
+var sum bool
 var junitXMLPath string
 var testFilePattern = ""
 var excludeFilePattern = ""
@@ -73,6 +74,7 @@ func parseFlags() {
 	flag.StringVar(&junitXMLPath, "junit-path", "", "Path to a JUnit XML report (leave empty to read from stdin; use glob pattern to load multiple files)")
 
 	flag.BoolVar(&useLineCount, "line-count", false, "Use line count to estimate test times")
+	flag.BoolVar(&useLineCount, "sum", false, "Sum test times instead of averaging them")
 
 	var showHelp bool
 	flag.BoolVar(&showHelp, "help", false, "Show this help text")
@@ -135,24 +137,26 @@ func main() {
 	removeDeletedFiles(fileTimes, currentFileSet)
 
 	// Create a new file time map with average times
-	averageFileTimes := make(map[string]float64)
+	reducedFileTimes := make(map[string]float64)
 
 	for file, times := range fileTimes {
-		averageFileTime := 0.0
+		fileTime := 0.0
 		for _, time := range times {
-			averageFileTime += time
+			fileTime += time
 		}
-		averageFileTime /= float64(len(times))
-		averageFileTimes[file] = averageFileTime
+		if !sum {
+			fileTime /= float64(len(times))
+		}
+		reducedFileTimes[file] = fileTime
 	}
 
 	for file, time := range fileTimes {
 		printMsg("%s: %0.1fs\n", file, time)
 	}
 
-	addNewFiles(averageFileTimes, currentFileSet)
+	addNewFiles(reducedFileTimes, currentFileSet)
 
-	buckets, bucketTimes := splitFiles(averageFileTimes, splitTotal)
+	buckets, bucketTimes := splitFiles(reducedFileTimes, splitTotal)
 
 	if useJUnitXML {
 		printMsg("expected test time: %0.1fs\n", bucketTimes[splitIndex])
