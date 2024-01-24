@@ -147,6 +147,10 @@ func main() {
 		if !sum {
 			fileTime /= float64(len(times))
 		}
+		// Min 1 second per test
+		if fileTime < 1.0 {
+			fileTime = 1.0
+		}
 		reducedFileTimes[file] = fileTime
 	}
 
