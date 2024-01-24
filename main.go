@@ -154,7 +154,7 @@ func main() {
 		reducedFileTimes[file] = fileTime
 	}
 
-	for file, time := range fileTimes {
+	for file, time := range reducedFileTimes {
 		printMsg("%s: %0.1fs\n", file, time)
 	}
 
